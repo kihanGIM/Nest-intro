@@ -8,9 +8,13 @@ import {
   Put,
 } from '@nestjs/common';
 import { BoardService } from './board.service';
-import { CreateArticleDto } from './dto/create-article.dto';
-import { DeleteArticleDto } from './dto/delete-article.dto';
-import { UpdateArticleDto } from './dto/update-articel.dto';
+// import { CreateArticleDto } from './dto/create-article.dto';
+// import { DeleteArticleDto } from './dto/delete-article.dto';
+// import { UpdateArticleDto } from './dto/update-articel.dto';
+
+import * as CreateArticleDto from '../dto/create-article.dto';
+import * as DeleteArticleDto from '../dto/delete-article.dto';
+import * as UpdateArticleDto from '../dto/update-articel.dto';
 
 @Controller('board')
 export class BoardController {
@@ -26,8 +30,13 @@ export class BoardController {
     return await this.boardService.getArticleById(articleId);
   }
 
+  @Get('/hot-articles')
+  async getHotArticles() {
+    return await this.boardService.getHotArticles();
+  }
+
   @Post('/articles')
-  createArticle(@Body() data: CreateArticleDto) {
+  createArticle(@Body() data: CreateArticleDto.CreateArticleDto) {
     return this.boardService.createArticle(
       data.title,
       data.content,
@@ -38,7 +47,7 @@ export class BoardController {
   @Put('/articles/:id')
   async updateArticle(
     @Param('id') articleId: number,
-    @Body() data: UpdateArticleDto,
+    @Body() data: UpdateArticleDto.UpdateArticleDto,
   ) {
     return await this.boardService.updateArticle(
       articleId,
@@ -51,7 +60,7 @@ export class BoardController {
   @Delete('/articles/:id')
   async deleteArticle(
     @Param('id') articleId: number,
-    @Body() data: DeleteArticleDto,
+    @Body() data: DeleteArticleDto.DeleteArticleDto,
   ) {
     return await this.boardService.deleteArticle(articleId, data.password);
   }

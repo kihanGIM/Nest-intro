@@ -1,24 +1,49 @@
-import { Module } from '@nestjs/common';
+import {
+  CacheModule,
+  MiddlewareConsumer,
+  Module,
+  NestModule,
+  RequestMethod,
+} from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
-import { BoardModule } from './board/board.module';
+import { BoardModule } from './board/dto/board.module';
+import { TypeOrmConfigService } from './config/typeorm.config.serviece';
+import { UserModule } from './user/user.module';
+import { ConfigModule, ConfigService } from '@nestjs/config';
+import { JwtModule } from '@nestjs/jwt';
+import { JwtConfigService } from './config/jwt.config.service';
+import { AuthMiddleware } from './auth/auth.middleware';
 
 @Module({
   imports: [
-    TypeOrmModule.forRoot({
-      type: 'mysql',
-      host: 'localhost',
-      port: 3306,
-      username: 'root',
-      password: 'kj978500',
-      database: 'board',
-      entities: [__dirname + '/**/*.entity{.ts,.js}'],
-      synchronize: true, // Production 환경에서는 false로 설정해야 합니다.
+    ConfigModule.forRoot({ isGlobal: true }),
+    TypeOrmModule.forRootAsync({
+      imports: [ConfigModule],
+      useClass: TypeOrmConfigService,
+      inject: [ConfigService],
+    }),
+    JwtModule.registerAsync({
+      imports: [ConfigModule],
+      useClass: JwtConfigService,
+      inject: [ConfigService],
+    }),
+    CacheModule.register({
+      ttl: 60000, // 데이터 캐싱 시간(밀리 초 단위, 1000 = 1초)
+      max: 100, // 최대 캐싱 개수
+      isGlobal: true,
     }),
     BoardModule,
+    UserModule,
   ],
   controllers: [AppController],
-  providers: [AppService],
+  providers: [AppService, AuthMiddleware],
 })
-export class AppModule {}
+export class AppModule implements NestModule {
+  configure(consumer: MiddlewareConsumer) {
+    consumer
+      .apply(AuthMiddleware)
+      .forRoutes({ path: 'user/update', method: RequestMethod.PUT });
+  }
+}
